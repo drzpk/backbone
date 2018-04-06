@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">Backbone</string>
+
+    <!-- PermissionManager -->
+    <string name="permission_manager_rationale_title">Permission denied</string>
+    <string name="permission_manager_rationale_retry">Retry</string>
+    <string name="permission_manager_rationale_sure">I\'m sure</string>
+    <string name="permission_manager_rationale_suffix">Are you sure you want to continue?</string>
+    <string name="permission_manager_request_error_m">Error: the required permission is missing.</string>
+    <string name="permission_manager_request_prefix">Missing permissions.</string>
+    <string name="permission_manager_request_normal">Tap to request for the permissisons again.</string>
+    <string name="permission_manager_request_settings">Tap to open settings and grant the required permissions.</string>
+    <string name="permission_manager_request_normal_button">Request</string>
+    <string name="permission_manager_request_settings_button">Open</string>
 </resources>
