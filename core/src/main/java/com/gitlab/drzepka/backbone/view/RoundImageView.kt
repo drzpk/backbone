@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable
 import android.os.Build
 import android.support.annotation.RequiresApi
 import android.util.AttributeSet
+import android.view.View
 import android.widget.ImageView
 import com.gitlab.drzepka.backbone.R
 
@@ -31,7 +32,6 @@ class RoundImageView : ImageView {
 
     private lateinit var backgroundPaint: Paint
     private lateinit var circlePath: Path
-    private lateinit var drawableRect: RectF
 
     // (In percentages)
     private var radiusTopLeft = 100
@@ -44,6 +44,7 @@ class RoundImageView : ImageView {
     private var adjustBounds = false
     private var fitScale = 1f
     private var fitScaleY = 1f
+    private var hardwareAcceleration: Boolean? = null
     private var ownBackground: Drawable? = null
 
     constructor(context: Context) : super(context) {
@@ -71,10 +72,8 @@ class RoundImageView : ImageView {
         // Initialize paints
         backgroundPaint = Paint()
         backgroundPaint.isAntiAlias = true
-        backgroundPaint.xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
         backgroundPaint.style = Paint.Style.FILL
         circlePath = Path()
-        circlePath.fillType = Path.FillType.EVEN_ODD
 
         if (attrs == null)
             return
@@ -115,6 +114,21 @@ class RoundImageView : ImageView {
 
         fit = array.getBoolean(R.styleable.RoundImageView_fit, false)
         adjustBounds = array.getBoolean(R.styleable.RoundImageView_adjust, false)
+    }
+
+    private fun postInitialize(accelerated: Boolean) {
+        // Determine whether hardware acceleration is allowed to use
+        hardwareAcceleration = accelerated && isHardwareAccelerated
+
+        if (hardwareAcceleration == true) {
+            // Switching to the hardware layer is required in order for transparency to work. Unfortunately this results
+            // in slightly higher memory usage.
+            setLayerType(View.LAYER_TYPE_HARDWARE, null)
+
+            backgroundPaint.xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_OUT)
+            circlePath.fillType = Path.FillType.INVERSE_EVEN_ODD
+        } else
+            circlePath.fillType = Path.FillType.EVEN_ODD
     }
 
     private fun checkRadius(name: String, value: Int) {
@@ -165,8 +179,15 @@ class RoundImageView : ImageView {
         if (width == 0 || height == 0)
             return
 
-        canvas.clipPath(circlePath)
+        // Initialize drawing components, depending on whether hardware acceleration is allowed
+        if (hardwareAcceleration == null)
+            postInitialize(canvas.isHardwareAccelerated)
+
+        if (hardwareAcceleration == false)
+            canvas.clipPath(circlePath)
         ownBackground?.draw(canvas)
+        if (hardwareAcceleration == true)
+            canvas.drawPath(circlePath, backgroundPaint)
 
         if (fitDirty) {
             fitDirty = false
