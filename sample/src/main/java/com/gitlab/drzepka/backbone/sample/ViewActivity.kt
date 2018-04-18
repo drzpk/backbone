@@ -7,7 +7,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.ScrollView
+import com.gitlab.drzepka.backbone.sample.view.ColorPickerViewFragment
 import com.gitlab.drzepka.backbone.sample.view.RoundImageViewFragment
 import com.gitlab.drzepka.sample.R
 import kotlin.reflect.KClass
@@ -51,6 +53,10 @@ class ViewActivity : AppCompatActivity() {
         override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
             val scrollView = ScrollView(context)
             scrollView.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            val layout = LinearLayout(context)
+            layout.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            layout.orientation = LinearLayout.VERTICAL
+            scrollView.addView(layout)
 
             // Add all known fragments to list
             FRAGMENTS.forEach {
@@ -60,7 +66,7 @@ class ViewActivity : AppCompatActivity() {
                     switchFragment(it)
                 }
 
-                scrollView.addView(button)
+                layout.addView(button)
             }
 
             return scrollView
@@ -69,6 +75,6 @@ class ViewActivity : AppCompatActivity() {
 
     companion object {
         /** Fragments available in list */
-        private val FRAGMENTS = listOf(RoundImageViewFragment::class)
+        private val FRAGMENTS = listOf(RoundImageViewFragment::class, ColorPickerViewFragment::class)
     }
 }
