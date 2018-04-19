@@ -9,4 +9,11 @@
         <attr name="fit" format="boolean" />
         <attr name="adjust" format="boolean" />
     </declare-styleable>
+
+    <declare-styleable name="CircularColorPickerView">
+        <attr name="showSaturation" format="boolean" />
+        <attr name="showLuminosity" format="boolean" />
+        <attr name="showAlpha" format="boolean" />
+        <attr name="initialColor" format="color" />
+    </declare-styleable>
 </resources>

@@ -1,3 +1,5 @@
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package com.gitlab.drzepka.backbone.view
 
 import android.annotation.SuppressLint
@@ -9,39 +11,128 @@ import android.util.DisplayMetrics
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
+import com.gitlab.drzepka.backbone.R
 import com.gitlab.drzepka.backbone.util.Converter
 
+/**
+ *  An HSLA color picker view with circilar shape.
+ *
+ *  **Note:** this view is view is quite resource-heavy and doesn't work very well in horizontal orientations,
+ *  so unless you really want to use it, use something different.
+ *
+ *  **Available attributes:**
+ *  * `app:showSaturation` - whether to show saturation slider
+ *  * `app:showLuminosity` - whether to show luminosity slider
+ *  * `app:showAlpha` - whether to show alpha slider
+ *  * `app:initialColor` - a color this picker will be set to
+ */
 class CircularColorPickerView : View {
 
     /**
      * Whether to show saturation slider.
      */
     var showSaturation = true
+        private set
     /**
      * Whether to show luminosity slider.
      */
     var showLuminosity = true
+        private set
     /**
      * Whether to show alpha slider.
      */
     var showAlpha = true
+        private set
 
+    /**
+     * Chosen hue.
+     */
     var pickedHue = 0
+        set(value) {
+            field = value
+            if (autoUpdateColors) {
+                if (value < 0 || value >= 360)
+                    throw IllegalArgumentException("Hue must be in range [0, 360)")
+                updateHueCenter()
+                updateColor()
+                updateShaders()
+                invalidate()
+            }
+        }
+    /**
+     * Chosen saturation.
+     */
     var pickedSaturation = 1f
+        set (value) {
+            field = value
+            if (autoUpdateColors) {
+                if (value < 0f || value > 1f)
+                    throw IllegalArgumentException("Saturation must be in range [0, 1]")
+                updateColor()
+                updateShaders()
+                invalidate()
+            }
+        }
+    /**
+     * Chosen luminosity.
+     */
     var pickedLuminosity = 0.5f
+        set (value) {
+            field = value
+            if (autoUpdateColors) {
+                if (value < 0f || value > 1f)
+                    throw IllegalArgumentException("Luminosity must be in range [0, 1]")
+                updateColor()
+                updateShaders()
+                invalidate()
+            }
+        }
+    /**
+     * Chosen alpha.
+     */
     var pickedAlpha = 1f
+        set (value) {
+            field = value
+            if (autoUpdateColors) {
+                if (value < 0f || value > 1f)
+                    throw IllegalArgumentException("Alpha must be in range [0, 1]")
+                updateColor()
+                updateShaders()
+                invalidate()
+            }
+        }
+    /**
+     * An RGBA-format color parsed from hue, saturation, luminosity and alpha.
+     */
     var pickedColor = 0
+        set (value) {
+            field = value
+            if (autoUpdateColors) {
+                val hsl = FloatArray(3)
+                ColorUtils.colorToHSL(value, hsl)
+                autoUpdateColors = false
+                pickedHue = hsl[0].toInt()
+                pickedSaturation = hsl[1]
+                pickedLuminosity = hsl[2]
+                pickedAlpha = (value ushr 24) / 255f
+                autoUpdateColors = true
+                updateHueCenter()
+                updateColor()
+                updateShaders()
+                invalidate()
+            }
+        }
 
     private var touchMode = TOUCH_MODE_NONE
     private var touchOffset = 0f
     private var offsetTop = 0f
     private var pickedHueCenter = PointF()
+    private var autoUpdateColors = true
 
     private val fillPaint = Paint()
     private val strokePaint = Paint()
     private val circlePaint = Paint()
     private val sliderPaint = Paint()
-    private val shadowPaint = Paint()
 
     private val circleColors = IntArray(360)
     private val circleRect = RectF()
@@ -66,18 +157,41 @@ class CircularColorPickerView : View {
     }
 
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs) {
-        initialize()
+        initialize(attrs)
     }
 
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
-        initialize()
+        initialize(attrs, defStyleAttr)
     }
 
-    private fun initialize() {
-        setLayerType(LAYER_TYPE_HARDWARE, null)
+    private fun initialize(attrs: AttributeSet? = null, defStyleAttr: Int = 0) {
+        //setLayerType(LAYER_TYPE_HARDWARE, null)
+
+        autoUpdateColors = false
+
+        // Obtain custom attributes
+        if (attrs != null) {
+            val array = context.obtainStyledAttributes(attrs, R.styleable.CircularColorPickerView, defStyleAttr, 0)
+            showSaturation = array.getBoolean(R.styleable.CircularColorPickerView_showSaturation, showSaturation)
+            showLuminosity = array.getBoolean(R.styleable.CircularColorPickerView_showLuminosity, showLuminosity)
+            showAlpha = array.getBoolean(R.styleable.CircularColorPickerView_showAlpha, showAlpha)
+
+            if (array.hasValue(R.styleable.CircularColorPickerView_initialColor)) {
+                pickedColor = array.getColor(R.styleable.CircularColorPickerView_initialColor, 0)
+                val hsl = FloatArray(3)
+                ColorUtils.colorToHSL(pickedColor, hsl)
+                pickedHue = hsl[0].toInt()
+                pickedSaturation = hsl[1]
+                pickedLuminosity = hsl[2]
+                pickedAlpha = (pickedColor ushr 24) / 255f
+            }
+
+            array.recycle()
+        }
 
         // Convert static fields' units to pixels
-        if (componentMargin == -1f) {
+        if (circleContrastStroke == -1f) {
+            circleContrastStroke = Converter.dpToPx(context, CIRCLE_CONTRAST_STROKE.toFloat())
             componentMargin = Converter.dpToPx(context, COMPONENT_MARGIN.toFloat())
             sliderHeight = Converter.dpToPx(context, SLIDER_HEIGHT.toFloat())
         }
@@ -93,7 +207,6 @@ class CircularColorPickerView : View {
         fillPaint.isAntiAlias = true
 
         strokePaint.style = Paint.Style.STROKE
-        strokePaint.strokeWidth = Converter.dpToPx(context, CIRCLE_CONTRAST_STROKE.toFloat())
         strokePaint.isAntiAlias = true
 
         circlePaint.style = Paint.Style.STROKE
@@ -102,18 +215,17 @@ class CircularColorPickerView : View {
         circlePaint.isAntiAlias = true
 
         sliderPaint.style = Paint.Style.STROKE
-        sliderPaint.strokeCap = Paint.Cap.ROUND
         sliderPaint.strokeWidth = 1f
         sliderPaint.isAntiAlias = true
 
-        shadowPaint.style = Paint.Style.FILL
-        shadowPaint.isAntiAlias = true
+        autoUpdateColors = true
     }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if (event == null)
             return super.onTouchEvent(event)
+        autoUpdateColors = false
 
         fun getValue(rect: RectF): Float {
             var pos = event.x - touchOffset
@@ -164,8 +276,8 @@ class CircularColorPickerView : View {
 
         fun inSliderBoundaries(rect: RectF): Boolean {
             // Slider pointer size is taken into account
-            return event.x >= rect.left - (sliderHeight / 2f)
-                    && event.x <= rect.right + (sliderHeight / 2f)
+            return event.x >= rect.left - sliderHeight
+                    && event.x <= rect.right + sliderHeight
                     && event.y >= rect.top
                     && event.y <= rect.bottom
         }
@@ -180,6 +292,7 @@ class CircularColorPickerView : View {
                 if (dist >= circleRadius * CIRCLE_COLOR_AREA_RADIUS && dist <= circleRadius * 1.2f) {
                     touchMode = TOUCH_MODE_HUE
                     handleHue()
+                    autoUpdateColors = true
                     return true
                 }
 
@@ -190,6 +303,7 @@ class CircularColorPickerView : View {
                         touchOffset = event.x - saturationSliderPos.x
                     }
                     handleSaturation()
+                    autoUpdateColors = true
                     return true
                 }
 
@@ -200,6 +314,7 @@ class CircularColorPickerView : View {
                         touchOffset = event.x - luminositySliderPos.x
                     }
                     handleLuminosity()
+                    autoUpdateColors = true
                     return true
                 }
 
@@ -210,6 +325,7 @@ class CircularColorPickerView : View {
                         touchOffset = event.x - alphaSliderPos.x
                     }
                     handleAlpha()
+                    autoUpdateColors = true
                     return true
                 }
             }
@@ -228,6 +344,11 @@ class CircularColorPickerView : View {
                         handleAlpha()
                     }
                 }
+
+                if (touchMode != TOUCH_MODE_NONE) {
+                    autoUpdateColors = true
+                    return true
+                }
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
                 // Reset touch mode
@@ -236,7 +357,16 @@ class CircularColorPickerView : View {
             }
         }
 
+        autoUpdateColors = true
         return super.onTouchEvent(event)
+    }
+
+    override fun dispatchTouchEvent(event: MotionEvent?): Boolean {
+        // Prevent from scrolling when this view is doing something
+        if (touchMode != TOUCH_MODE_NONE)
+            parent.requestDisallowInterceptTouchEvent(true)
+
+        return super.dispatchTouchEvent(event)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -381,7 +511,7 @@ class CircularColorPickerView : View {
         drawCircle(canvas)
         if (showSaturation)
             drawSaturationSlider(canvas)
-        if(showLuminosity)
+        if (showLuminosity)
             drawLuminositySlider(canvas)
         if (showAlpha)
             drawAlphaSlider(canvas)
@@ -403,6 +533,7 @@ class CircularColorPickerView : View {
 
         // Contrast ring
         strokePaint.color = CIRCLE_CONTRAST
+        strokePaint.strokeWidth = circleContrastStroke
         canvas.drawCircle(circleCenter.x, circleCenter.y, circleRadius * 0.98f, strokePaint)
 
         // Contrast lines
@@ -416,9 +547,8 @@ class CircularColorPickerView : View {
         canvas.drawLine(circleCenter.x, circleCenter.y, pickedHueCenter.x, pickedHueCenter.y, strokePaint)
 
         // Selected color
-        shadowPaint.color = pickedColor
-        canvas.drawCircle(circleCenter.x, circleCenter.y, circleRadius * 0.33f, shadowPaint)
-        shadowPaint.color = Color.BLACK
+        fillPaint.color = pickedColor
+        canvas.drawCircle(circleCenter.x, circleCenter.y, circleRadius * 0.33f, fillPaint)
 
         // Plus in the center
         val oldStroke = strokePaint.strokeWidth
@@ -436,7 +566,7 @@ class CircularColorPickerView : View {
 
         sliderPaint.style = Paint.Style.STROKE
         sliderPaint.color = Color.DKGRAY
-        canvas.drawRoundRect(saturationSliderRect, 10f, 10f, strokePaint)
+        canvas.drawRoundRect(saturationSliderRect, 10f, 10f, sliderPaint)
 
         drawSliderPointer(canvas, saturationSliderPos)
     }
@@ -448,7 +578,7 @@ class CircularColorPickerView : View {
 
         sliderPaint.style = Paint.Style.STROKE
         sliderPaint.color = Color.DKGRAY
-        canvas.drawRoundRect(luminositySliderRect, 10f, 10f, strokePaint)
+        canvas.drawRoundRect(luminositySliderRect, 10f, 10f, sliderPaint)
 
         drawSliderPointer(canvas, luminositySliderPos)
     }
@@ -460,7 +590,7 @@ class CircularColorPickerView : View {
 
         sliderPaint.style = Paint.Style.STROKE
         sliderPaint.color = Color.DKGRAY
-        canvas.drawRoundRect(alphaSliderRect, 10f, 10f, strokePaint)
+        canvas.drawRoundRect(alphaSliderRect, 10f, 10f, sliderPaint)
 
         drawSliderPointer(canvas, alphaSliderPos)
     }
@@ -558,7 +688,7 @@ class CircularColorPickerView : View {
         /**
          * Width of the circle outer ring stroke (in DP units).
          */
-        private const val CIRCLE_STROKE = 15
+        private const val CIRCLE_STROKE = 19
         /**
          * Background color of the hue circle dial.
          */
@@ -579,7 +709,7 @@ class CircularColorPickerView : View {
         /**
          * Vertical distance between components (in DP units).
          */
-        private const val COMPONENT_MARGIN = 20
+        private const val COMPONENT_MARGIN = 25
         /**
          * Width of the sliders (as a percentage of the widget width).
          */
@@ -587,7 +717,7 @@ class CircularColorPickerView : View {
         /**
          * Height of the sliders (in DP units).
          */
-        private const val SLIDER_HEIGHT = 10
+        private const val SLIDER_HEIGHT = 14
 
         // Touch modes
         private const val TOUCH_MODE_NONE = 0
@@ -597,6 +727,7 @@ class CircularColorPickerView : View {
         private const val TOUCH_MODE_ALPHA = 4
 
         // Const fields converted to pixels
+        private var circleContrastStroke = -1f
         private var componentMargin = -1f
         private var sliderHeight = -1f
     }
