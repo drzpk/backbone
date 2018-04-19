@@ -5,7 +5,7 @@ import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.gitlab.drzepka.sample.R
+import com.gitlab.drzepka.backbone.sample.R
 
 class ColorPickerViewFragment : Fragment() {
 

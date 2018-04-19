@@ -11,7 +11,6 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import com.gitlab.drzepka.backbone.sample.view.ColorPickerViewFragment
 import com.gitlab.drzepka.backbone.sample.view.RoundImageViewFragment
-import com.gitlab.drzepka.sample.R
 import kotlin.reflect.KClass
 
 /**

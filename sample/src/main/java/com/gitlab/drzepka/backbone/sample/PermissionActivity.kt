@@ -7,7 +7,6 @@ import android.view.View
 import android.widget.Toast
 import com.gitlab.drzepka.backbone.permission.PermissionBundle
 import com.gitlab.drzepka.backbone.permission.PermissionManager
-import com.gitlab.drzepka.sample.R
 
 /**
  * This activity shows example usage of the [PermissionManager] class.
