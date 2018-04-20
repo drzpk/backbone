@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="vertical"
+              android:padding="?dialogPreferredPadding">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <View
+            android:id="@+id/dialog_rgb_color_picker_plane"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:layout_marginBottom="7dp"
+            tools:background="#ff3322" />
+
+        <TextView
+            android:id="@+id/dialog_rgb_color_picker_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:background="#ccffffff"
+            android:fontFamily="monospace"
+            android:padding="8dp"
+            android:textColor="@android:color/black"
+            android:textSize="19sp"
+            tools:text="#32ff8382" />
+
+    </RelativeLayout>
+
+    <LinearLayout style="@style/RGBColorPicker">
+
+        <SeekBar
+            android:id="@+id/dialog_rgb_color_picker_seek_red"
+            style="@style/RGBColorPicker.SeekBar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:progress="132"
+            tools:progressTint="#ffff0000"
+            tools:thumbTint="#ffff0000" />
+
+        <TextView
+            android:id="@+id/dialog_rgb_color_picker_text_red"
+            style="@style/RGBColorPicker.TextView"
+            tools:text="132" />
+
+    </LinearLayout>
+
+    <LinearLayout style="@style/RGBColorPicker">
+
+        <SeekBar
+            android:id="@+id/dialog_rgb_color_picker_seek_green"
+            style="@style/RGBColorPicker.SeekBar"
+            tools:progress="25"
+            tools:progressTint="#ff00ff00"
+            tools:thumbTint="#ff00ff00" />
+
+        <TextView
+            android:id="@+id/dialog_rgb_color_picker_text_green"
+            style="@style/RGBColorPicker.TextView"
+            tools:text="25" />
+
+    </LinearLayout>
+
+    <LinearLayout style="@style/RGBColorPicker">
+
+        <SeekBar
+            android:id="@+id/dialog_rgb_color_picker_seek_blue"
+            style="@style/RGBColorPicker.SeekBar"
+            tools:progress="193"
+            tools:progressTint="#ff0000ff"
+            tools:thumbTint="#ff0000ff" />
+
+        <TextView
+            android:id="@+id/dialog_rgb_color_picker_text_blue"
+            style="@style/RGBColorPicker.TextView"
+            tools:text="193" />
+
+    </LinearLayout>
+
+    <LinearLayout style="@style/RGBColorPicker">
+
+        <SeekBar
+            android:id="@+id/dialog_rgb_color_picker_seek_alpha"
+            style="@style/RGBColorPicker.SeekBar"
+            tools:progress="84"
+            tools:progressTint="@android:color/darker_gray"
+            tools:thumbTint="@android:color/darker_gray" />
+
+        <TextView
+            android:id="@+id/dialog_rgb_color_picker_text_alpha"
+            style="@style/RGBColorPicker.TextView"
+            tools:text="84" />
+
+    </LinearLayout>
+
+</LinearLayout>

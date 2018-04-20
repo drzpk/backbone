@@ -12,4 +12,8 @@
     <string name="permission_manager_request_settings">Tap to open settings and grant the required permissions.</string>
     <string name="permission_manager_request_normal_button">Request</string>
     <string name="permission_manager_request_settings_button">Open</string>
+
+    <!-- RGBColorPickerDialog -->
+    <string name="dialog_rgb_color_picker_default_title">Choose a color</string>
+
 </resources>

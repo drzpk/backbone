@@ -10,6 +10,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import com.gitlab.drzepka.backbone.sample.view.ColorPickerViewFragment
+import com.gitlab.drzepka.backbone.sample.view.DialogColorPickerFragment
 import com.gitlab.drzepka.backbone.sample.view.RoundImageViewFragment
 import kotlin.reflect.KClass
 
@@ -74,6 +75,10 @@ class ViewActivity : AppCompatActivity() {
 
     companion object {
         /** Fragments available in list */
-        private val FRAGMENTS = listOf(RoundImageViewFragment::class, ColorPickerViewFragment::class)
+        private val FRAGMENTS = listOf(
+                RoundImageViewFragment::class,
+                ColorPickerViewFragment::class,
+                DialogColorPickerFragment::class
+        )
     }
 }
