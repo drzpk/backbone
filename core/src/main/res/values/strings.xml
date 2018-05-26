@@ -16,4 +16,7 @@
     <!-- RGBColorPickerDialog -->
     <string name="dialog_rgb_color_picker_default_title">Choose a color</string>
 
+    <!-- CollapsibleLayout -->
+    <string name="view_collapsible_button_description">Expand/collapse view</string>
+
 </resources>

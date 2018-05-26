@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import com.gitlab.drzepka.backbone.sample.view.CollapsibleLayoutFragment
 import com.gitlab.drzepka.backbone.sample.view.ColorPickerViewFragment
 import com.gitlab.drzepka.backbone.sample.view.DialogColorPickerFragment
 import com.gitlab.drzepka.backbone.sample.view.RoundImageViewFragment
@@ -78,7 +79,8 @@ class ViewActivity : AppCompatActivity() {
         private val FRAGMENTS = listOf(
                 RoundImageViewFragment::class,
                 ColorPickerViewFragment::class,
-                DialogColorPickerFragment::class
+                DialogColorPickerFragment::class,
+                CollapsibleLayoutFragment::class
         )
     }
 }

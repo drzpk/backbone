@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical">
+
+    <com.gitlab.drzepka.backbone.view.CollapsibleLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:headerBackgroundColor="@android:color/holo_green_light">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#d9957a"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="An example text"
+                android:textAppearance="@style/Base.TextAppearance.AppCompat.Large"
+                tools:ignore="HardcodedText" />
+
+            <SeekBar
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+
+    </com.gitlab.drzepka.backbone.view.CollapsibleLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Non-collapsible text"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        tools:ignore="HardcodedText" />
+
+</LinearLayout>
