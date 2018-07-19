@@ -24,4 +24,6 @@
         <attr name="headerTextColor" format="color" />
         <attr name="headerBackgroundColor" format="color" />
     </declare-styleable>
+
+    <attr name="colorToolbarForeground" format="reference" />
 </resources>

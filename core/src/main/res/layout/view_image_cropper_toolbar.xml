@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:theme="@style/AppTheme"
+    android:orientation="horizontal"
+    tools:ignore="ContentDescription"
+    tools:layout_height="?android:attr/actionBarSize">
+
+    <Button
+        android:id="@+id/image_cropper_toolbar_save"
+        style="@style/Button.BorderlessBold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:text="@string/image_cropper_button_save"
+        android:textColor="?colorToolbarForeground" />
+
+    <Button
+        android:id="@+id/image_cropper_toolbar_discard"
+        style="@style/Button.BorderlessBold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:text="@string/image_cropper_button_discard"
+        android:textColor="?colorToolbarForeground" />
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1" />
+
+    <ImageButton
+        android:id="@+id/image_cropper_toolbar_rotate_left"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginEnd="20dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginStart="20dp"
+        android:background="?android:selectableItemBackground"
+        android:src="@drawable/ic_rotate_left"
+        android:tint="?attr/colorToolbarForeground" />
+
+    <ImageButton
+        android:id="@+id/image_cropper_toolbar_rotate_right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginEnd="20dp"
+        android:background="?android:selectableItemBackground"
+        android:src="@drawable/ic_rotate_right"
+        android:tint="?attr/colorToolbarForeground" />
+
+</LinearLayout>

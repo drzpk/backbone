@@ -19,4 +19,8 @@
     <!-- CollapsibleLayout -->
     <string name="view_collapsible_button_description">Expand/collapse view</string>
 
+    <!-- Image Cropping -->
+    <string name="image_cropper_button_save">Save</string>
+    <string name="image_cropper_button_discard">Discard</string>
+
 </resources>

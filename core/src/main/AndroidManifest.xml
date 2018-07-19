@@ -4,6 +4,16 @@
     <application
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme" />
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:name=".activity.ImageCropperActivity"
+            android:theme="@style/ImageCropperTheme" />
+
+        <service
+            android:name=".util.ScreenShooter$ScreenShooterService"
+            android:exported="false" />
+
+    </application>
 
 </manifest>
