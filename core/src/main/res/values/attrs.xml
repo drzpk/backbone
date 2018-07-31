@@ -25,5 +25,11 @@
         <attr name="headerBackgroundColor" format="color" />
     </declare-styleable>
 
+    <declare-styleable name="RectSelectorView">
+        <attr name="overlayColor" format="color" />
+        <attr name="cornerColor" format="color" />
+        <attr name="cornerRadius" format="dimension" />
+    </declare-styleable>
+
     <attr name="colorToolbarForeground" format="reference" />
 </resources>
