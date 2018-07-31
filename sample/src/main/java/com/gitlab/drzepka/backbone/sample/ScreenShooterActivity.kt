@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
@@ -53,7 +54,7 @@ class ScreenShooterActivity : AppCompatActivity(), ScreenShooter.OnScreenshotRea
         screenShooter.onActivityResult(requestCode, resultCode, data)
     }
 
-    override fun onScreenshotReady(bitmap: Bitmap) {
+    override fun onScreenshotReady(bitmap: Bitmap?, bitmapUri: Uri?) {
         Toast.makeText(this, "Screenshot has been taken", Toast.LENGTH_LONG).show()
         imageView.setImageBitmap(bitmap)
     }

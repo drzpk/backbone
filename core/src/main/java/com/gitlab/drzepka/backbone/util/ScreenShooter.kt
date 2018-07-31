@@ -9,11 +9,14 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.PixelFormat
+import android.graphics.Point
 import android.hardware.display.DisplayManager
 import android.media.ImageReader
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.support.v4.app.NotificationCompat
 import android.support.v4.app.NotificationManagerCompat
 import android.util.DisplayMetrics
@@ -32,7 +35,7 @@ import kotlin.concurrent.thread
 /**
  * This class' purpose is to facilitate taking screenshots.
  *
- * **Note:** before using this class you should check wheter a device meets the requiremenets by invoking the
+ * **Note:** before using this class you should check whether a device meets the requirements by invoking the
  * [canTakeScreenshot] method.
  */
 class ScreenShooter(
@@ -49,8 +52,10 @@ class ScreenShooter(
         private val preferRoot: Boolean = true,
         /** Whether to run editor before returning an image. */
         private val useEditor: Boolean = true,
+        /** Whether this class should return bitmap or bitmap URI to a listener. */
+        private val returnBitmap: Boolean = true,
         /** Delay between a screenshot request and capture (used to wait for notification bar to collapse). */
-        val delay: Long = 500L
+        private val delay: Long = 500L
 ) {
 
     private val listenerId: Int = ReferenceCenter.registerReference(listener)
@@ -66,12 +71,24 @@ class ScreenShooter(
         if (!canTakeScreenshot())
             return
 
-        if (preferRoot && Shell.SU.available())
-            rootMethod()
-        else if (API.lollipop()) {
-            val manager = activityComponent.context!!.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-            val intent = manager.createScreenCaptureIntent()
-            activityComponent.startActivityForResult(intent, REQUEST_MEDIA_PROJECTION)
+        fun mediaProjection() {
+            if (API.lollipop()) {
+                val manager = activityComponent.context!!.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+                val intent = manager.createScreenCaptureIntent()
+                activityComponent.startActivityForResult(intent, REQUEST_MEDIA_PROJECTION)
+            }
+        }
+
+        if (preferRoot) {
+            if (Shell.SU.available())
+                rootMethod()
+            else
+                mediaProjection()
+        } else {
+            if (API.lollipop())
+                mediaProjection()
+            else
+                rootMethod()
         }
     }
 
@@ -86,6 +103,7 @@ class ScreenShooter(
     private fun getIntents(code: Int, data: Intent?): Array<Intent> {
         fun attachData(intent: Intent) {
             intent.putExtra(EXTRA_REFERENCE_ID, listenerId)
+            intent.putExtra(EXTRA_RETURN_BITMAP, returnBitmap)
             intent.putExtra(EXTRA_USE_EDITOR, useEditor)
             intent.putExtra(EXTRA_DELAY, delay)
         }
@@ -125,14 +143,13 @@ class ScreenShooter(
                 .setContentTitle(notificationPayload.title.getText(activityComponent.context!!))
                 .setStyle(NotificationCompat.BigTextStyle().bigText(notificationPayload.content.getText(activityComponent.context!!)))
                 .setAutoCancel(false)
-                .setOngoing(true)
                 .addAction(android.R.color.transparent, notificationPayload.positiveActionText?.getText(activityComponent.context!!)
                         ?: "", shootPendingIntent)
                 .addAction(android.R.color.transparent, notificationPayload.negativeActionText?.getText(activityComponent.context!!)
                         ?: "", cancelPendingIntent)
 
         if (notificationPayload.icon != 0)
-                builder.setSmallIcon(notificationPayload.icon)
+            builder.setSmallIcon(notificationPayload.icon)
         else
             builder.setSmallIcon(android.R.mipmap.sym_def_app_icon)
 
@@ -163,9 +180,11 @@ class ScreenShooter(
      */
     interface OnScreenshotReadyListener {
         /**
-         * Called when the screenshot [Bitmap] is ready.
+         * Called when the screenshot is ready. Returns either a [bitmap] or [bitmapUri], depending on the
+         * ScreenShooter settings.
+         * @see ScreenShooter.returnBitmap
          */
-        fun onScreenshotReady(bitmap: Bitmap)
+        fun onScreenshotReady(bitmap: Bitmap? = null, bitmapUri: Uri? = null)
 
         /**
          * Called when a notification or image editing is cancelled.
@@ -175,6 +194,7 @@ class ScreenShooter(
 
     class ScreenShooterService : IntentService("ScreenShooterService") {
         private var referenceId = 0
+        private var returnBitmap = true
         private var useEditor = false
         private var delay = 0L
 
@@ -183,6 +203,7 @@ class ScreenShooter(
                 return
 
             referenceId = intent.getIntExtra(EXTRA_REFERENCE_ID, 0)
+            returnBitmap = intent.getBooleanExtra(EXTRA_RETURN_BITMAP, true)
             useEditor = intent.getBooleanExtra(EXTRA_USE_EDITOR, false)
             delay = intent.getLongExtra(EXTRA_DELAY, 0)
 
@@ -190,7 +211,7 @@ class ScreenShooter(
                 ACTION_SCREENSHOT_MEDIA_PROJECTION -> {
                     val code = intent.getIntExtra(EXTRA_CODE, 0)
                     val data = intent.getParcelableExtra<Intent>(EXTRA_DATA)
-                    screenshotByMediaProjection(code, data)
+                    Handler(Looper.getMainLooper()).postDelayed({ screenshotByMediaProjection(code, data) }, delay)
                     dismissNotification(this)
                 }
                 ACTION_SCREENSHOT_ROOT -> {
@@ -201,7 +222,7 @@ class ScreenShooter(
                     dismissNotification(this)
                     returnCancel()
                 }
-                ACTION_RETURN_IMAGE -> returnBitmap(
+                ACTION_RETURN_IMAGE -> returnImage(
                         if (intent.hasExtra(EXTRA_IMAGE_URI)) Uri.parse(intent.getStringExtra(EXTRA_IMAGE_URI)) else null)
             }
         }
@@ -211,6 +232,9 @@ class ScreenShooter(
             val windowManager = applicationContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
             val metrics = DisplayMetrics()
             windowManager.defaultDisplay.getRealMetrics(metrics)
+
+            val size = Point()
+            windowManager.defaultDisplay.getRealSize(size)
 
             val imageReader = ImageReader.newInstance(metrics.widthPixels, metrics.heightPixels, PixelFormat.RGBA_8888, 2)
 
@@ -238,12 +262,16 @@ class ScreenShooter(
                 val bitmap = Bitmap.createBitmap(metrics.widthPixels + rowPadding, metrics.heightPixels, Bitmap.Config.ARGB_8888)
                 bitmap.copyPixelsFromBuffer(plane.buffer)
 
-                // Fihish up
+                // Finish up
                 image.close()
                 projection.stop()
                 display.release()
                 it.setOnImageAvailableListener(null, null)
-                returnBitmap(bitmap)
+                if (useEditor) {
+                    val uri = saveBitmap(bitmap)
+                    editBitmap(uri)
+                } else
+                    returnImage(bitmap)
             }, null)
         }
 
@@ -284,7 +312,7 @@ class ScreenShooter(
                             val uri = saveBitmap(bitmap)
                             editBitmap(uri)
                         } else
-                            returnBitmap(bitmap)
+                            returnImage(bitmap)
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -304,29 +332,42 @@ class ScreenShooter(
         private fun editBitmap(bitmapUri: Uri) {
             val intent = Intent(applicationContext, ImageCropperActivity::class.java)
             intent.putExtra(EXTRA_REFERENCE_ID, referenceId)
+            intent.putExtra(EXTRA_RETURN_BITMAP, returnBitmap)
             intent.putExtra(EXTRA_IMAGE_URI, bitmapUri.toString())
             startActivity(intent)
         }
 
-        private fun returnBitmap(bitmap: Bitmap) {
+        private fun returnImage(bitmap: Bitmap) {
             val listener = ReferenceCenter.getReference(referenceId) as OnScreenshotReadyListener? ?: return
-            post { listener.onScreenshotReady(bitmap) }
+            val uri = if (!returnBitmap) saveBitmap(bitmap) else null
+            post {
+                if (uri != null)
+                    listener.onScreenshotReady(null, uri)
+                else
+                    listener.onScreenshotReady(bitmap)
+            }
         }
 
-        private fun returnBitmap(bitmapUri: Uri?) {
+        private fun returnImage(bitmapUri: Uri?) {
             if (bitmapUri != null) {
                 // Bitmap was edited successfully
-                thread {
-                    try {
-                        val stream = contentResolver.openInputStream(bitmapUri)
-                        val bitmap = BitmapFactory.decodeStream(stream)
-                        stream.close()
-                        post { returnBitmap(bitmap) }
-                    } catch (exception: Exception) {
-                        exception.printStackTrace()
-                        post { returnCancel() }
+                if (returnBitmap) {
+                    thread {
+                        try {
+                            val stream = contentResolver.openInputStream(bitmapUri)
+                            val bitmap = BitmapFactory.decodeStream(stream)
+                            stream.close()
+                            post { returnImage(bitmap) }
+                        } catch (exception: Exception) {
+                            exception.printStackTrace()
+                            post { returnCancel() }
+                        }
                     }
+                } else {
+                    val listener = ReferenceCenter.getReference(referenceId) as OnScreenshotReadyListener?
+                    listener?.onScreenshotReady(null, bitmapUri)
                 }
+
             } else
                 returnCancel()
         }
@@ -357,6 +398,7 @@ class ScreenShooter(
         const val NOTIFICATION_ID = 1100
 
         const val EXTRA_REFERENCE_ID = "ScreenShooter.EXTRA_REFERENCE_ID"
+        const val EXTRA_RETURN_BITMAP = "ScreenShooter.EXTRA_RETURN_BITMAP"
         const val EXTRA_IMAGE_URI = "ScreenShooter.EXTRA_IMAGE_URI"
         private const val EXTRA_USE_EDITOR = "ScreenShooter.EXTRA_USER_EDITOR"
         private const val EXTRA_DATA = "ScreenShooter.EXTRA_DATA"

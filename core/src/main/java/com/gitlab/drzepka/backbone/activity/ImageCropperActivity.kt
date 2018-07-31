@@ -24,6 +24,7 @@ class ImageCropperActivity : AppCompatActivity() {
     private lateinit var imageView: CropImageView
     private lateinit var fileUri: Uri
     private var referenceId: Int = 0
+    private var returnBitmap: Boolean = true
 
     @SuppressLint("InflateParams")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,6 +49,7 @@ class ImageCropperActivity : AppCompatActivity() {
             throw IllegalStateException("Image URI must be provided")
         fileUri = Uri.parse(intent.getStringExtra(ScreenShooter.EXTRA_IMAGE_URI))
         referenceId = intent.getIntExtra(ScreenShooter.EXTRA_REFERENCE_ID, 0)
+        returnBitmap = intent.getBooleanExtra(ScreenShooter.EXTRA_RETURN_BITMAP, true)
 
         imageView.setImageUriAsync(fileUri)
         imageView.setOnSetImageUriCompleteListener({ _, _, error ->
@@ -89,6 +91,7 @@ class ImageCropperActivity : AppCompatActivity() {
     private fun finish(success: Boolean) {
         val intent = Intent(this, ScreenShooter.ScreenShooterService::class.java)
         intent.putExtra(ScreenShooter.EXTRA_REFERENCE_ID, referenceId)
+        intent.putExtra(ScreenShooter.EXTRA_RETURN_BITMAP, returnBitmap)
         if (success) {
             intent.action = ScreenShooter.ACTION_RETURN_IMAGE
             intent.putExtra(ScreenShooter.EXTRA_IMAGE_URI, fileUri.toString())
